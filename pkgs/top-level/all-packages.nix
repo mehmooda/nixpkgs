@@ -9211,6 +9211,10 @@ with pkgs;
 
   pe_imp_fix = callPackage ../build-support/setup-hooks/pe_imp_fix { };
 
+  peImpFixHook = makeSetupHook
+    { name = "pe-imp-fix-hook"; substitutions = { pe_imp_fix = "${pkgsBuildBuild.pe_imp_fix}/bin/pe_imp_fix"; }; }
+    ../build-support/setup-hooks/pe_imp_fix/fix_dll_ar_import_table.sh;
+
   peep = callPackage ../tools/misc/peep { };
 
   pell = callPackage ../applications/misc/pell { };
