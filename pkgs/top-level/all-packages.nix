@@ -9209,6 +9209,8 @@ with pkgs;
 
   pazi = callPackage ../tools/misc/pazi { };
 
+  pe_imp_fix = callPackage ../build-support/setup-hooks/pe_imp_fix { };
+
   peep = callPackage ../tools/misc/peep { };
 
   pell = callPackage ../applications/misc/pell { };
