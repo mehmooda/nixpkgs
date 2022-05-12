@@ -25,7 +25,7 @@ stdenv.mkDerivation rec {
     homepage = "https://linux.thai.net/projects/libthai/";
     description = "Set of Thai language support routines";
     license = licenses.lgpl21Plus;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ SuperSandro2000 ];
   };
 }
