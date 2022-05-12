@@ -85,6 +85,7 @@ in lib.init bootStages ++ [
              buildPackages.updateAutotoolsGnuConfigScriptsHook
            # without proper `file` command, libtool sometimes fails
            # to recognize 64-bit DLLs
+        ++ lib.optional hostPlatform.isWindows buildPackages.peImpFixHook
         ++ lib.optional (hostPlatform.config == "x86_64-w64-mingw32") buildPackages.file
         ;
     }));
