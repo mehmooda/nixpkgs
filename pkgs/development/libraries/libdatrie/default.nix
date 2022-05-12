@@ -22,7 +22,7 @@ stdenv.mkDerivation rec {
     installShellFiles
   ];
 
-  buildInputs = lib.optional stdenv.isDarwin libiconv;
+  buildInputs = lib.optional (stdenv.isDarwin || stdenv.hostPlatform.isWindows) libiconv;
 
   preAutoreconf = let
     reports = "https://github.com/tlwg/libdatrie/issues";
@@ -40,7 +40,7 @@ stdenv.mkDerivation rec {
     homepage = "https://linux.thai.net/~thep/datrie/datrie.html";
     description = "This is an implementation of double-array structure for representing trie";
     license = licenses.lgpl21Plus;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ SuperSandro2000 ];
   };
 }
