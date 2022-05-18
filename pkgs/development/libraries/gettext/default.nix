@@ -52,7 +52,8 @@ stdenv.mkDerivation rec {
     xz
     xz.bin
   ];
-  buildInputs = [ bash ]
+  # Is bash really a buildInput?
+  buildInputs = lib.optionals (!stdenv.hostPlatform.isWindows) [ bash ]
   # HACK, see #10874 (and 14664)
     ++ lib.optionals (!stdenv.isLinux && !stdenv.hostPlatform.isCygwin) [ libiconv ];
 
