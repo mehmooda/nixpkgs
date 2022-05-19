@@ -1,4 +1,6 @@
-{ lib, stdenv, fetchurl, libiconv, vanilla ? false }:
+{ lib, stdenv, fetchurl, libiconv, vanilla ? false,
+# Cross-compiling
+glib, pkg-config }:
 
 with lib;
 
@@ -25,9 +27,13 @@ stdenv.mkDerivation rec {
     rm -f check/check-requires-private check/check-gtk check/missing
   '';
 
-  buildInputs = optional (stdenv.isCygwin || stdenv.isDarwin || stdenv.isSunOS) libiconv;
+  nativeBuildInputs = optional (stdenv.buildPlatform != stdenv.hostPlatform) pkg-config;
 
-  configureFlags = [ "--with-internal-glib" ]
+
+  buildInputs = optional (stdenv.isCygwin || stdenv.isDarwin || stdenv.isSunOS) libiconv
+       ++ optional (stdenv.buildPlatform != stdenv.hostPlatform) glib;
+
+  configureFlags = optional (stdenv.buildPlatform == stdenv.hostPlatform) "--with-internal-glib"
     ++ optional (stdenv.isSunOS) [ "--with-libiconv=gnu" "--with-system-library-path" "--with-system-include-path" "CFLAGS=-DENABLE_NLS" ]
        # Can't run these tests while cross-compiling
     ++ optional (stdenv.hostPlatform != stdenv.buildPlatform)
