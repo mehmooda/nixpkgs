@@ -16,7 +16,7 @@
 , ninja
 , glib
 , python3
-, x11Support? !stdenv.isDarwin, libXft
+, x11Support? !(stdenv.isDarwin || stdenv.hostPlatform.isWindows), libXft
 , withIntrospection ? (stdenv.buildPlatform == stdenv.hostPlatform)
 , gobject-introspection
 , withDocs ? (stdenv.buildPlatform == stdenv.hostPlatform)
@@ -73,14 +73,16 @@ stdenv.mkDerivation rec {
   mesonFlags = [
     "-Dgtk_doc=${lib.boolToString withDocs}"
     "-Dintrospection=${if withIntrospection then "enabled" else "disabled"}"
+  ] ++ lib.optional stdenv.hostPlatform.isWindows [
+    "-Dfontconfig=disabled"
   ] ++ lib.optionals (!x11Support) [
     "-Dxft=disabled" # only works with x11
   ];
 
   # Fontconfig error: Cannot load default config file
-  FONTCONFIG_FILE = makeFontsConf {
+  FONTCONFIG_FILE = if (!stdenv.hostPlatform.isWindows) then makeFontsConf {
     fontDirectories = [ freefont_ttf ];
-  };
+  } else "";
 
   doCheck = false; # test-font: FAIL
 
@@ -111,6 +113,6 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl2Plus;
 
     maintainers = with maintainers; [ raskin ] ++ teams.gnome.members;
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = platforms.linux ++ platforms.darwin ++ platforms.windows;
   };
 }
