@@ -130,6 +130,6 @@ stdenv.mkDerivation rec {
     changelog = "https://libtiff.gitlab.io/libtiff/v${version}.html";
     maintainers = with maintainers; [ qyliss ];
     license = licenses.libtiff;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }
