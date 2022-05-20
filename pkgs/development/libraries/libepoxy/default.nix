@@ -10,7 +10,7 @@
 , libX11
 , Carbon
 , OpenGL
-, x11Support ? !stdenv.isDarwin
+, x11Support ? !(stdenv.isDarwin || stdenv.hostPlatform.isWindows)
 }:
 
 let
@@ -69,6 +69,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/anholt/libepoxy";
     license = licenses.mit;
     maintainers = with maintainers; [ goibhniu erictapen ];
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }
