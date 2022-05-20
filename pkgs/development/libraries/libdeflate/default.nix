@@ -37,7 +37,7 @@ stdenv.mkDerivation rec {
     description = "Fast DEFLATE/zlib/gzip compressor and decompressor";
     license = licenses.mit;
     homepage = "https://github.com/ebiggers/libdeflate";
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ orivej kaction ];
   };
 }
