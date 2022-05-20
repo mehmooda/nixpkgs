@@ -76,7 +76,8 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     meson
     ninja
-    gobject-introspection
+    ] ++ optional isNativeCompilation gobject-introspection ++ [
+    glib
     libintl
     pkg-config
     python3
@@ -115,6 +116,6 @@ stdenv.mkDerivation {
     homepage = "https://harfbuzz.github.io/";
     maintainers = [ maintainers.eelco ];
     license = licenses.mit;
-    platforms = with platforms; linux ++ darwin;
+    platforms = with platforms; linux ++ darwin ++ windows;
   };
 }
