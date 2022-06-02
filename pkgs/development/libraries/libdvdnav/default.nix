@@ -1,4 +1,6 @@
-{lib, stdenv, fetchurl, pkg-config, libdvdread}:
+{lib, stdenv, fetchurl, pkg-config
+, autoreconfHook
+, libdvdread}:
 
 stdenv.mkDerivation rec {
   pname = "libdvdnav";
@@ -9,7 +11,11 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-wZGnR1lH0yP/doDPksD7G+gjdwGIXzdlbGTQTpjRjUg=";
   };
 
-  nativeBuildInputs = [ pkg-config ];
+  postPatch = ''
+    sed 's/libdvdnav_la_LDFLAGS = /libdvdnav_la_LDFLAGS = -no-undefined /' -i Makefile.am
+  '';
+
+  nativeBuildInputs = [ autoreconfHook pkg-config ];
   buildInputs = [libdvdread];
 
   meta = {
@@ -17,7 +23,7 @@ stdenv.mkDerivation rec {
     description = "A library that implements DVD navigation features such as DVD menus";
     license = lib.licenses.gpl2;
     maintainers = [ lib.maintainers.wmertens ];
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.unix ++ lib.platforms.windows;
   };
 
   passthru = { inherit libdvdread; };

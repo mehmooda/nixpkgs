@@ -2,6 +2,7 @@
 , stdenv
 , fetchurl
 , alsa-lib
+, autoreconfHook
 , pkg-config
 , AudioUnit
 , AudioToolbox
@@ -18,8 +19,16 @@ stdenv.mkDerivation rec {
     sha256 = "1vrdrd42jsnffh6rq8ap2c6fr4g9fcld89z649fs06bwqx1bzvs7";
   };
 
-  nativeBuildInputs = [ pkg-config ];
-  buildInputs = lib.optional (!stdenv.isDarwin) alsa-lib;
+  nativeBuildInputs = [ autoreconfHook pkg-config ];
+  buildInputs = lib.optional (!(stdenv.isDarwin || stdenv.hostPlatform.isWindows)) alsa-lib;
+
+  # configure tries to use host ar rather then prefixed ar
+  postPatch = ''
+    sed -i 's/AC_PATH_PROG/AC_CHECK_TOOL/' configure.in
+    pushd bindings/cpp
+    autoreconfPhase
+    popd
+  '';
 
   configureFlags = [ "--disable-mac-universal" "--enable-cxx" ];
 
@@ -37,7 +46,7 @@ stdenv.mkDerivation rec {
   # not sure why, but all the headers seem to be installed by the make install
   installPhase = ''
     make install
-  '' + lib.optionalString (!stdenv.isDarwin) ''
+  '' + lib.optionalString (!(stdenv.isDarwin || stdenv.hostPlatform.isWindows)) ''
     # fixup .pc file to find alsa library
     sed -i "s|-lasound|-L${alsa-lib.out}/lib -lasound|" "$out/lib/pkgconfig/"*.pc
   '' + lib.optionalString stdenv.isDarwin ''
@@ -50,7 +59,7 @@ stdenv.mkDerivation rec {
     # Not exactly a bsd license, but alike
     license     = licenses.mit;
     maintainers = with maintainers; [ lovek323 ];
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
   };
 
   passthru = {

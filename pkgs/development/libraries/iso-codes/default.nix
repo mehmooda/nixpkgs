@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchurl, gettext, python3 }:
+{ lib, stdenv, fetchurl, gettext, python3, buildPackages }:
 
 stdenv.mkDerivation rec {
   pname = "iso-codes";
@@ -12,7 +12,7 @@ stdenv.mkDerivation rec {
   patchPhase = ''
     for i in `find . -name \*.py`
     do
-        sed -i -e "s|#!/usr/bin/env python|#!${python3}/bin/python|" $i
+        sed -i -e "s|#!/usr/bin/env python|#!${buildPackages.python3}/bin/python|" $i
     done
   '';
 

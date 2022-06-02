@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchFromGitHub, cmake, openssl
+{ lib, stdenv, fetchFromGitHub, cmake, openssl, windows
 }:
 
 with lib;
@@ -15,7 +15,8 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [ cmake ];
 
-  buildInputs = [ openssl ];
+  buildInputs = [ openssl ]
+   ++ optional stdenv.hostPlatform.isWindows windows.pthreads;
 
   cmakeFlags = [
     # the cmake package does not handle absolute CMAKE_INSTALL_INCLUDEDIR correctly

@@ -6,6 +6,9 @@
 , gdk-pixbuf
 , pango
 , cairo
+, freetype
+, fontconfig
+, windows
 , libxml2
 , bzip2
 , libintl
@@ -62,8 +65,12 @@ stdenv.mkDerivation rec {
     bzip2
     pango
     libintl
+    freetype
+    fontconfig
   ] ++ lib.optionals withIntrospection [
     gobject-introspection
+  ] ++ [
+    windows.pthreads
   ] ++ lib.optionals stdenv.isDarwin [
     ApplicationServices
     Foundation
@@ -147,6 +154,6 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl2Plus;
     maintainers = teams.gnome.members;
     mainProgram = "rsvg-convert";
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

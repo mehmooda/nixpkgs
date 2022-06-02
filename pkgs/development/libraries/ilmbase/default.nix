@@ -33,5 +33,7 @@ stdenv.mkDerivation rec {
     homepage = "https://www.openexr.com/";
     license = licenses.bsd3;
     platforms = platforms.all;
+
+    broken = stdenv.hostPlatform.isWindows;
   };
 }

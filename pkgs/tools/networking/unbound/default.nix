@@ -70,7 +70,9 @@ stdenv.mkDerivation rec {
     "--with-rootkey-file=${dns-root-data}/root.key"
     "--enable-pie"
     "--enable-relro-now"
-  ] ++ lib.optional stdenv.hostPlatform.isStatic [
+# Unable to build with flto on mingw due to a libtool error due to empty global_symbol_pipe
+# checking command to parse x86_64-w64-mingw32-nm output from x86_64-w64-mingw32-gcc object... failed
+  ] ++ lib.optional (with stdenv.hostPlatform; isStatic || isWindows) [
     "--disable-flto"
   ] ++ lib.optionals withSystemd [
     "--enable-systemd"
@@ -93,6 +95,8 @@ stdenv.mkDerivation rec {
     "--enable-cachedb"
     "--with-libhiredis=${hiredis}"
   ];
+
+  enableParallelBuilding = true;
 
   PROTOC_C = lib.optionalString withDNSTAP "${protobufc}/bin/protoc-c";
 
@@ -149,6 +153,6 @@ stdenv.mkDerivation rec {
     license = licenses.bsd3;
     homepage = "https://www.unbound.net";
     maintainers = with maintainers; [ fpletz globin ];
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

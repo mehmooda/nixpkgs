@@ -132,12 +132,13 @@ stdenv.mkDerivation rec {
   # X11 dependencies.
   # For static linking, it is better to rely on `pkg-config` `.pc`
   # files.
+  # TODO: WINDOWS-FIX
   postInstall = ''
-    if [ "$dontDisableStatic" -eq "1" ]; then
-      rm $out/lib/*.la
-    else
-      rm $out/lib/*.a
-    fi
+#    if [ "$dontDisableStatic" -eq "1" ]; then
+#      rm $out/lib/*.la
+#    else
+#      rm $out/lib/*.a
+#    fi
     moveToOutput bin/sdl2-config "$dev"
   '';
 

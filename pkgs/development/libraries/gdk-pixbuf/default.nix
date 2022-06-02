@@ -100,6 +100,7 @@ stdenv.mkDerivation rec {
       # All except one utility seem to be only useful during building.
       moveToOutput "bin" "$dev"
       moveToOutput "bin/gdk-pixbuf-thumbnailer" "$out"
+      moveToOutput "bin/*.dll" "$out"
 
     '' + lib.optionalString stdenv.isDarwin ''
       # meson erroneously installs loaders with .dylib extension on Darwin.
@@ -152,6 +153,6 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl21Plus;
     maintainers = [ maintainers.eelco ] ++ teams.gnome.members;
     mainProgram = "gdk-pixbuf-thumbnailer";
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

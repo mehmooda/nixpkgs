@@ -1,6 +1,7 @@
 { lib, stdenv, fetchurl, meson, ninja
 , gtk-doc ? null, file, docbook_xsl
 , buildDevDoc ? gtk-doc != null
+, windows
 }: let
   inherit (lib) optional optionals;
 in stdenv.mkDerivation rec {
@@ -33,6 +34,8 @@ in stdenv.mkDerivation rec {
     ++ optionals buildDevDoc [ gtk-doc file docbook_xsl ]
   ;
 
+  buildInputs = lib.optional stdenv.hostPlatform.isWindows windows.pthreads;
+
   doCheck = true;
 
   meta = with lib; {
@@ -41,7 +44,7 @@ in stdenv.mkDerivation rec {
     # The source code implementing the Marsenne Twister algorithm is licensed
     # under the 3-clause BSD license. The rest is 2-clause BSD license.
     license = with licenses; [ bsd3 bsd2 ];
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = [ ];
   };
 }

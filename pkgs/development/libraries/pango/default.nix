@@ -16,6 +16,8 @@
 , ninja
 , glib
 , python3
+, freetype
+, fontconfig
 , x11Support? !(stdenv.isDarwin || stdenv.hostPlatform.isWindows), libXft
 , withIntrospection ? (stdenv.buildPlatform == stdenv.hostPlatform)
 , gobject-introspection
@@ -54,6 +56,8 @@ stdenv.mkDerivation rec {
   buildInputs = [
     fribidi
     libthai
+    freetype
+    fontconfig
   ] ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
     ApplicationServices
     Carbon
@@ -73,8 +77,6 @@ stdenv.mkDerivation rec {
   mesonFlags = [
     "-Dgtk_doc=${lib.boolToString withDocs}"
     "-Dintrospection=${if withIntrospection then "enabled" else "disabled"}"
-  ] ++ lib.optional stdenv.hostPlatform.isWindows [
-    "-Dfontconfig=disabled"
   ] ++ lib.optionals (!x11Support) [
     "-Dxft=disabled" # only works with x11
   ];

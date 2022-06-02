@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchurl, yasm, autoconf, automake, libtool }:
+{ lib, stdenv, fetchurl, yasm, autoreconfHook, autoconf, automake, libtool }:
 
 with lib;
 stdenv.mkDerivation rec {
@@ -24,6 +24,7 @@ stdenv.mkDerivation rec {
     ++ optional stdenv.isDarwin "--enable-macosx_module --disable-assembly";
 
   nativeBuildInputs = [ ]
+    ++ optionals stdenv.hostPlatform.isWindows [ autoconf automake libtool ]
     ++ optional (!stdenv.isDarwin) yasm;
 
   buildInputs = [ ]
@@ -32,7 +33,8 @@ stdenv.mkDerivation rec {
 
   # Don't remove static libraries (e.g. 'libs/*.a') on darwin.  They're needed to
   # compile ffmpeg (and perhaps other things).
-  postInstall = optionalString (!stdenv.isDarwin) ''
+  # And Windows uses dll.a for shared libraries
+  postInstall = optionalString (!(stdenv.isDarwin || stdenv.hostPlatform.isWindows)) ''
     rm $out/lib/*.a
   '';
 

@@ -13,6 +13,7 @@
 , protobuf
 , config
 , ocl-icd
+, orc
 
 , enableJPEG ? true
 , libjpeg
@@ -22,7 +23,7 @@
 , libtiff
 , enableWebP ? true
 , libwebp
-, enableEXR ? !stdenv.isDarwin
+, enableEXR ? !(with stdenv; isDarwin || hostPlatform.isWindows)
 , openexr
 , ilmbase
 , enableEigen ? true
@@ -224,6 +225,12 @@ stdenv.mkDerivation {
   # causes build failure on non NixOS)
   postPatch = ''
     sed -i '/Add these standard paths to the search paths for FIND_LIBRARY/,/^\s*$/{d}' CMakeLists.txt
+  '' 
+  # OpenCV tries to guess include path rather than use pkg-config on windows.
+  + ''
+    sed -i '660 i find_package(PkgConfig)' CMakeLists.txt
+    sed -i 's/UNIX AND NOT ANDROID/TRUE/' cmake/OpenCVGenPkgconfig.cmake
+    sed -i 's/NOT HAVE_GSTREAMER AND WIN32/FALSE/' modules/videoio/cmake/detect_gstreamer.cmake
   '';
 
   preConfigure =
@@ -245,7 +252,8 @@ stdenv.mkDerivation {
   '';
 
   buildInputs =
-    [ zlib pcre hdf5 boost gflags protobuf ]
+    [ zlib pcre boost gflags protobuf ]
+    ++ lib.optional (!stdenv.hostPlatform.isWindows) hdf5
     ++ lib.optional enablePython pythonPackages.python
     ++ lib.optional enableGtk2 gtk2
     ++ lib.optional enableGtk3 gtk3
@@ -258,7 +266,7 @@ stdenv.mkDerivation {
     ++ lib.optional enableFfmpeg ffmpeg
     ++ lib.optionals (enableFfmpeg && stdenv.isDarwin)
       [ VideoDecodeAcceleration bzip2 ]
-    ++ lib.optionals enableGStreamer (with gst_all_1; [ gstreamer gst-plugins-base ])
+    ++ lib.optionals enableGStreamer (with gst_all_1; [ gstreamer gst-plugins-base orc ])
     ++ lib.optional enableOvis ogre
     ++ lib.optional enableGPhoto2 libgphoto2
     ++ lib.optional enableDC1394 libdc1394
@@ -275,7 +283,7 @@ stdenv.mkDerivation {
   propagatedBuildInputs = lib.optional enablePython pythonPackages.numpy
     ++ lib.optionals enableCuda [ cudatoolkit nvidia-optical-flow-sdk ];
 
-  nativeBuildInputs = [ cmake pkg-config unzip ]
+  nativeBuildInputs = [ cmake pkg-config unzip protobuf ]
   ++ lib.optionals enablePython [
     pythonPackages.pip
     pythonPackages.wheel
@@ -296,16 +304,16 @@ stdenv.mkDerivation {
     "-DBUILD_TESTS=OFF"
     "-DBUILD_PERF_TESTS=OFF"
     "-DBUILD_DOCS=${printEnabled enableDocs}"
-    (opencvFlag "IPP" enableIpp)
-    (opencvFlag "TIFF" enableTIFF)
-    (opencvFlag "WEBP" enableWebP)
-    (opencvFlag "JPEG" enableJPEG)
-    (opencvFlag "PNG" enablePNG)
-    (opencvFlag "OPENEXR" enableEXR)
+    (opencvFlag "IPP" enableIpp) "-DBUILD_IPP_IW=OFF"
+    (opencvFlag "TIFF" enableTIFF) "-DBUILD_TIFF=OFF"
+    (opencvFlag "WEBP" enableWebP) "-DBUILD_WEBP=OFF"
+    (opencvFlag "JPEG" enableJPEG) "-DBUILD_OPENJPEG=OFF" "-DBUILD_JPEG=OFF"
+    (opencvFlag "PNG" enablePNG) "-DBUILD_PNG=OFF"
+    (opencvFlag "OPENEXR" enableEXR) "-DBUILD_OPENEXR=OFF"
     (opencvFlag "CUDA" enableCuda)
     (opencvFlag "CUBLAS" enableCuda)
-    (opencvFlag "TBB" enableTbb)
-  ] ++ lib.optionals enableCuda [
+    (opencvFlag "TBB" enableTbb) "-DBUILD_TBB=OFF"
+] ++ lib.optionals enableCuda [
     "-DCUDA_FAST_MATH=ON"
     "-DCUDA_HOST_COMPILER=${cudatoolkit.cc}/bin/cc"
     "-DCUDA_NVCC_FLAGS=--expt-relaxed-constexpr"
@@ -313,7 +321,7 @@ stdenv.mkDerivation {
   ] ++ lib.optionals stdenv.isDarwin [
     "-DWITH_OPENCL=OFF"
     "-DWITH_LAPACK=OFF"
-  ] ++ lib.optionals (!stdenv.isDarwin) [
+  ] ++ lib.optionals (!(stdenv.isDarwin || stdenv.hostPlatform.isWindows)) [
     "-DOPENCL_LIBRARY=${ocl-icd}/lib/libOpenCL.so"
   ] ++ lib.optionals enablePython [
     "-DOPENCV_SKIP_PYTHON_LOADER=ON"
@@ -362,6 +370,6 @@ stdenv.mkDerivation {
     homepage = "https://opencv.org/";
     license = with licenses; if enableUnfree then unfree else bsd3;
     maintainers = with maintainers; [ mdaiter basvandijk ];
-    platforms = with platforms; linux ++ darwin;
+    platforms = with platforms; linux ++ darwin ++ windows;
   };
 }

@@ -1,4 +1,4 @@
-{stdenv, lib, fetchFromGitLab, autoconf, automake, libtool}:
+{stdenv, lib, fetchFromGitLab, autoreconfHook,}:
 
 stdenv.mkDerivation rec {
   pname = "soundtouch";
@@ -11,9 +11,13 @@ stdenv.mkDerivation rec {
     sha256 = "12i6yg8vvqwyk412lxl2krbfby6hnxld8qxy0k4m5xp4g94jiq4p";
   };
 
-  nativeBuildInputs = [ autoconf automake libtool ];
+  nativeBuildInputs = [ autoreconfHook ];
 
-  preConfigure = "./bootstrap";
+  postPatch = ''
+    sed 's/libSoundTouch_la_LDFLAGS=/libSoundTouch_la_LDFLAGS=-no-undefined /' -i source/SoundTouch/Makefile.am
+  '';
+
+#  preConfigure = "./bootstrap";
 
   enableParallelBuilding = true;
 

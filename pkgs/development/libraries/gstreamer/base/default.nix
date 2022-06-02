@@ -32,8 +32,8 @@
 , enableCocoa ? false
 , Cocoa
 , OpenGL
-, enableGl ? (enableX11 || enableWayland || enableCocoa)
-, enableCdparanoia ? (!stdenv.isDarwin)
+, enableGl ? (enableX11 || enableWayland || enableCocoa || stdenv.hostPlatform.isWindows)
+, enableCdparanoia ? !(stdenv.isDarwin || stdenv.hostPlatform.isWindows)
 , cdparanoia
 , glib
 , withIntrospection ? stdenv.buildPlatform == stdenv.hostPlatform
@@ -76,11 +76,13 @@ stdenv.mkDerivation rec {
     libpng
     libjpeg
     tremor
+  ] ++ lib.optionals (!stdenv.hostPlatform.isWindows) [
     libGL
-  ] ++ lib.optional (!stdenv.isDarwin) [
+  ] ++ lib.optionals (!(stdenv.isDarwin || stdenv.hostPlatform.isWindows)) [
     libvisual
-  ] ++ lib.optionals stdenv.isDarwin [
+  ] ++ lib.optionals (stdenv.isDarwin || stdenv.hostPlatform.isWindows) [
     pango
+  ] ++ lib.optionals stdenv.isDarwin [
     OpenGL
   ] ++ lib.optionals enableAlsa [
     alsa-lib
@@ -105,7 +107,7 @@ stdenv.mkDerivation rec {
     "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
     "-Dgl-graphene=disabled" # not packaged in nixpkgs as of writing
     # See https://github.com/GStreamer/gst-plugins-base/blob/d64a4b7a69c3462851ff4dcfa97cc6f94cd64aef/meson_options.txt#L15 for a list of choices
-    "-Dgl_winsys=${lib.concatStringsSep "," (lib.optional enableX11 "x11" ++ lib.optional enableWayland "wayland" ++ lib.optional enableCocoa "cocoa")}"
+    "-Dgl_winsys=${lib.concatStringsSep "," (lib.optional enableX11 "x11" ++ lib.optional enableWayland "wayland" ++ lib.optional enableCocoa "cocoa" ++ lib.optional stdenv.hostPlatform.isWindows "win32")}"
     "-Dintrospection=${if withIntrospection then "enabled" else "disabled"}"
   ] ++ lib.optionals (stdenv.buildPlatform != stdenv.hostPlatform) [
     "-Dtests=disabled"
@@ -115,7 +117,7 @@ stdenv.mkDerivation rec {
   ++ lib.optional (!enableGl) "-Dgl=disabled"
   ++ lib.optional (!enableAlsa) "-Dalsa=disabled"
   ++ lib.optional (!enableCdparanoia) "-Dcdparanoia=disabled"
-  ++ lib.optionals stdenv.isDarwin [
+  ++ lib.optionals (stdenv.isDarwin || stdenv.hostPlatform.isWindows) [
     "-Dlibvisual=disabled"
   ];
 
@@ -152,7 +154,7 @@ stdenv.mkDerivation rec {
     description = "Base GStreamer plug-ins and helper libraries";
     homepage = "https://gstreamer.freedesktop.org";
     license = licenses.lgpl2Plus;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ matthewbauer ];
   };
 }

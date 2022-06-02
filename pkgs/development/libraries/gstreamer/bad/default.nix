@@ -93,6 +93,8 @@
 , Foundation
 , MediaToolbox
 , enableGplPlugins ? true
+, isNativeCompilation ? (stdenv.buildPlatform == stdenv.hostPlatform)
+, bzip2
 }:
 
 stdenv.mkDerivation rec {
@@ -114,7 +116,8 @@ stdenv.mkDerivation rec {
     python3
     gettext
     gstreamer # for gst-tester-1.0
-    gobject-introspection
+  ] ++ lib.optionals isNativeCompilation [
+     gobject-introspection
   ] ++ lib.optionals stdenv.isLinux [
     wayland # for wayland-scanner
   ];
@@ -124,13 +127,13 @@ stdenv.mkDerivation rec {
     orc
     # gobject-introspection has to be in both nativeBuildInputs and
     # buildInputs. The build tries to link against libgirepository-1.0.so
+  ] ++ lib.optionals isNativeCompilation [
     gobject-introspection
+  ] ++ [
     json-glib
     ldacbt
     libass
     libkate
-    webrtc-audio-processing # required by webrtcdsp
-    #webrtc-audio-processing_1 # required by isac
     libbs2b
     libmodplug
     libmicrodns
@@ -142,43 +145,50 @@ stdenv.mkDerivation rec {
     fdk_aac
     gsm
     libaom
+  ] ++ lib.optionals (!stdenv.hostPlatform.isWindows) [
+    webrtc-audio-processing # required by webrtcdsp
+    #webrtc-audio-processing_1 # required by isac
     libdc1394
+    libvdpau
+    openexr
+    libGL
+    libGLU
+    libfreeaptx
+    fluidsynth
+    libusb1
+  ] ++ [
     libde265
     libdvdnav
     libdvdread
     qrencode
     libsndfile
-    libusb1
     neon
     openal
     opencv4
-    openexr
     openh264
     rtmpdump
     pango
     soundtouch
     srtp
-    fluidsynth
-    libvdpau
     libwebp
     xvidcore
     gnutls
-    libGL
-    libGLU
     libgme
     openssl
     libxml2
     libintl
     srt
     vo-aacenc
-    libfreeaptx
+  ] ++ lib.optionals stdenv.hostPlatform.isWindows [
+    bzip2
   ] ++ lib.optionals enableZbar [
     zbar
   ] ++ lib.optionals faacSupport [
     faac
+  ] ++ lib.optionals (enableGplPlugins && !stdenv.hostPlatform.isWindows) [
+    mjpegtools
   ] ++ lib.optionals enableGplPlugins [
     libmpeg2
-    mjpegtools
     faad2
     x265
   ] ++ lib.optionals stdenv.isLinux [
@@ -186,7 +196,7 @@ stdenv.mkDerivation rec {
     libva # vaapi requires libva -> libdrm -> libpciaccess, which is Linux-only in nixpkgs
     wayland
     wayland-protocols
-  ] ++ lib.optionals (!stdenv.isDarwin) [
+  ] ++ lib.optionals (!(stdenv.isDarwin || stdenv.hostPlatform.isWindows)) [
     # wildmidi requires apple's OpenAL
     # TODO: package apple's OpenAL, fix wildmidi, include on Darwin
     wildmidi
@@ -268,7 +278,27 @@ stdenv.mkDerivation rec {
   ++ lib.optionals (!stdenv.isLinux) [
     "-Dva=disabled" # see comment on `libva` in `buildInputs`
   ]
-  ++ lib.optionals stdenv.isDarwin [
+  ++ lib.optionals stdenv.hostPlatform.isWindows [
+    "-Dx11=disabled"
+    "-Dshm=disabled"
+    "-Ddc1394=disabled"
+    "-Dfluidsynth=disabled"
+    "-Dmplex=disabled"
+    # Can only be built with MSVC
+    "-Dasio=disabled"
+    "-Dmediafoundation=disabled"
+    "-Dmpeg2enc=disabled"
+    "-Dmplex=disabled"
+    "-Dopenaptx=disabled"
+    "-Dopenexr=disabled"
+    "-Dwebrtcdsp=disabled"
+    "-Dtests=disabled" # needs gst-tester-1.0
+  ]
+  ++ lib.optionals (stdenv.isDarwin || stdenv.hostPlatform.isWindows) [
+    "-Ddvb=disabled"
+    "-Dfbdev=disabled"
+    "-Duvch264=disabled" # requires gudev
+    "-Dv4l2codecs=disabled" # requires gudev
     "-Dbluez=disabled"
     "-Dchromaprint=disabled"
     "-Ddirectfb=disabled"
@@ -277,10 +307,6 @@ stdenv.mkDerivation rec {
     "-Dlv2=disabled"
     "-Dsbc=disabled"
     "-Dspandsp=disabled"
-    "-Ddvb=disabled"
-    "-Dfbdev=disabled"
-    "-Duvch264=disabled" # requires gudev
-    "-Dv4l2codecs=disabled" # requires gudev
     "-Dladspa=disabled" # requires lrdf
     "-Dwebrtc=disabled" # requires libnice, which as of writing doesn't work on Darwin in nixpkgs
     "-Dwildmidi=disabled" # see dependencies above
@@ -312,6 +338,8 @@ stdenv.mkDerivation rec {
   postPatch = ''
     patchShebangs \
       scripts/extract-release-date-from-doap-file.py
+  # Tries to manually link against '-lopencv_tracking' which is already included correctly in Windows pkg-config as '-lopencv_tracking545'
+    sed -e "s/, '-lopencv_tracking'//" -i ext/opencv/meson.build
   '';
 
   # This package has some `_("string literal")` string formats
@@ -330,7 +358,7 @@ stdenv.mkDerivation rec {
       a real live maintainer, or some actual wide use.
     '';
     license = if enableGplPlugins then licenses.gpl2Plus else licenses.lgpl2Plus;
-    platforms = platforms.linux ++ platforms.darwin;
+    platforms = platforms.linux ++ platforms.darwin ++ platforms.windows;
     maintainers = with maintainers; [ matthewbauer ];
   };
 }

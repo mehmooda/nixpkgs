@@ -4,7 +4,7 @@
 , pngSupport ? true, libpng # PNG image format
 , jpegSupport ? true, libjpeg # JPEG image format
 , tiffSupport ? true, libtiff # TIFF image format
-, gifSupport ? true, giflib # GIF image format
+, gifSupport ? true && !stdenv.hostPlatform.isWindows, giflib # GIF image format
 #, wicSupport ? true # Windows Imaging Component
 , alignedSupport ? false # Force aligned memory operations
 , swap16bitcspSupport ? false # Byte swap for 16bit color spaces

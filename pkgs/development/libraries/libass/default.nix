@@ -38,7 +38,7 @@ stdenv.mkDerivation rec {
     description = "Portable ASS/SSA subtitle renderer";
     homepage    = "https://github.com/libass/libass";
     license     = licenses.isc;
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ codyopel ];
   };
 }

@@ -1,4 +1,8 @@
-{ lib, stdenv, fetchFromGitHub }:
+{ lib, stdenv, fetchFromGitHub
+, cmake
+, ninja
+, fetchpatch
+}:
 
 stdenv.mkDerivation rec {
   pname = "xxHash";
@@ -11,21 +15,32 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-2WoYCO6QRHWrbGP2mK04/sLNTyQLOuL3urVktilAwMA=";
   };
 
+  patches = [
+    (fetchpatch {
+      url = "https://github.com/Cyan4973/xxHash/pull/649.patch";
+      sha256 = "B1PZ/0BXlOrSiPvgCPLvI/sjQvnR0n5PQHOO38LOij0=";
+    })
+  ];
+
   # Upstream Makefile does not anticipate that user may not want to
   # build .so library.
-  postPatch = lib.optionalString stdenv.hostPlatform.isStatic ''
-    sed -i 's/lib: libxxhash.a libxxhash/lib: libxxhash.a/' Makefile
-    sed -i '/LIBXXH) $(DESTDIR/ d' Makefile
-  '';
+ # postPatch = lib.optionalString stdenv.hostPlatform.isStatic ''
+  #  sed -i 's/lib: libxxhash.a libxxhash/lib: libxxhash.a/' Makefile
+   # sed -i '/LIBXXH) $(DESTDIR/ d' Makefile
+ # '';
+
+  nativeBuildInputs = [ cmake ninja ];
+
+  cmakeDir = "../cmake_unofficial";
 
   outputs = [ "out" "dev" ];
 
-  makeFlags = [ "PREFIX=$(dev)" "EXEC_PREFIX=$(out)" ];
+  #makeFlags = [ "PREFIX=$(dev)" "EXEC_PREFIX=$(out)" ];
 
   # pkgs/build-support/setup-hooks/compress-man-pages.sh hook fails
   # to compress symlinked manpages. Avoid compressing manpages until
   # it's fixed.
-  dontGzipMan = true;
+  #dontGzipMan = true;
 
   meta = with lib; {
     description = "Extremely fast hash algorithm";
@@ -39,6 +54,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/Cyan4973/xxHash";
     license = with licenses; [ bsd2 gpl2 ];
     maintainers = with maintainers; [ orivej ];
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

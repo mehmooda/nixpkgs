@@ -1,7 +1,7 @@
 {lib, stdenv, fetchurl, buildPackages}:
 
 stdenv.mkDerivation rec {
-  pname = "yasm";
+  pname = if (stdenv.hostPlatform != stdenv.targetPlatform) then "yasm-${stdenv.targetPlatform.config}" else "yasm";
   version = "1.3.0";
 
   src = fetchurl {

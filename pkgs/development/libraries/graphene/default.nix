@@ -15,6 +15,7 @@
 , docbook_xml_dtd_43
 , gobject-introspection
 , makeWrapper
+, windows
 }:
 
 stdenv.mkDerivation rec {
@@ -56,14 +57,14 @@ stdenv.mkDerivation rec {
     meson
     ninja
     pkg-config
-    gobject-introspection
+    ] ++ lib.optional (stdenv.hostPlatform == stdenv.buildPlatform) gobject-introspection ++ [
     python3
     makeWrapper
   ];
 
   buildInputs = [
     glib
-  ];
+  ] ++ lib.optional stdenv.hostPlatform.isWindows windows.pthreads;
 
   checkInputs = [
     mutest
@@ -108,6 +109,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/ebassi/graphene";
     license = licenses.mit;
     maintainers = teams.gnome.members ++ (with maintainers; [ ]);
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

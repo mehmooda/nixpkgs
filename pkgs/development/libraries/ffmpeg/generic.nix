@@ -10,7 +10,7 @@
 , runtimeCpuDetectBuild ? true # Detect CPU capabilities at runtime
 , multithreadBuild ? true # Multithreading via pthreads/win32 threads
 , sdlSupport ? !stdenv.isAarch32, SDL ? null, SDL2 ? null
-, vdpauSupport ? !stdenv.isAarch32, libvdpau ? null
+, vdpauSupport ? !(stdenv.isAarch32 || stdenv.hostPlatform.isWindows), libvdpau ? null
 # Developer options
 , debugDeveloper ? false
 , optimizationsDeveloper ? true
@@ -94,7 +94,7 @@ stdenv.mkDerivation rec {
   configurePlatforms = [];
   configureFlags = filter (v: v != null) ([
       "--arch=${stdenv.hostPlatform.parsed.cpu.name}"
-      "--target_os=${stdenv.hostPlatform.parsed.kernel.name}"
+      "--target_os=${if stdenv.hostPlatform.isMinGW then "mingw32" else stdenv.hostPlatform.parsed.kernel.name}"
     # License
       "--enable-gpl"
       "--enable-version3"
@@ -106,7 +106,7 @@ stdenv.mkDerivation rec {
       "--enable-hardcoded-tables"
     ] ++
       (if multithreadBuild then (
-         if stdenv.isCygwin then
+         if stdenv.hostPlatform.isWindows then
            ["--disable-pthreads" "--enable-w32threads"]
          else # Use POSIX threads by default
            ["--enable-pthreads" "--disable-w32threads"])

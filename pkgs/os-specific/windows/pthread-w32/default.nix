@@ -13,7 +13,10 @@ stdenv.mkDerivation {
 
   installPhase = ''
     runHook preInstall
-
+    install -D -t $out/include pthread.h
+    install -D -t $out/include sched.h
+    install -D -t $out/include semaphore.h
+    
     install -D libpthreadGC2.a $out/lib/libpthread.a
 
     runHook postInstall

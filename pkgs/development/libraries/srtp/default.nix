@@ -27,8 +27,9 @@ stdenv.mkDerivation rec {
     pkg-config
   ];
 
-  buildInputs = [
+  buildInputs = lib.optionals doCheck [
     libpcap
+  ] ++ [
     openssl
   ];
 
@@ -45,7 +46,7 @@ stdenv.mkDerivation rec {
     "-Dtests=${if doCheck then "enabled" else "disabled"}"
   ];
 
-  doCheck = true;
+  doCheck = !stdenv.hostPlatform.isWindows;
 
   meta = with lib; {
     homepage = "https://github.com/cisco/libsrtp";

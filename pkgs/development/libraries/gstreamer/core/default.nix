@@ -18,6 +18,7 @@
 , CoreServices
 , withIntrospection ? stdenv.buildPlatform == stdenv.hostPlatform
 , gobject-introspection
+, windows
 }:
 
 stdenv.mkDerivation rec {
@@ -49,6 +50,7 @@ stdenv.mkDerivation rec {
     python3
     makeWrapper
     glib
+  ] ++ lib.optionals (!stdenv.hostPlatform.isWindows) [
     bash-completion
 
     # documentation
@@ -59,8 +61,10 @@ stdenv.mkDerivation rec {
     gobject-introspection
   ];
 
-  buildInputs = [
+  buildInputs = lib.optionals (!stdenv.hostPlatform.isWindows) [
     bash-completion
+  ] ++ lib.optionals stdenv.hostPlatform.isWindows [
+    windows.pthreads
   ] ++ lib.optionals stdenv.isLinux [
     libcap
     libunwind
@@ -80,7 +84,9 @@ stdenv.mkDerivation rec {
     "-Dexamples=disabled" # requires many dependencies and probably not useful for our users
     "-Ddoc=disabled" # `hotdoc` not packaged in nixpkgs as of writing
     "-Dintrospection=${if withIntrospection then "enabled" else "disabled"}"
-  ] ++ lib.optionals stdenv.isDarwin [
+  ] ++ lib.optionals (stdenv.hostPlatform.isWindows) [
+    "-Dbash-completion=disabled"
+  ] ++ lib.optionals (!stdenv.hostPlatform.isLinux) [
     # darwin.libunwind doesn't have pkg-config definitions so meson doesn't detect it.
     "-Dlibunwind=disabled"
     "-Dlibdw=disabled"
@@ -96,7 +102,12 @@ stdenv.mkDerivation rec {
   '';
 
   postInstall = ''
-    for prog in "$bin/bin/"*; do
+    for prog in "$bin/bin/"'' +
+    # TODO: Make wrapProgram smarter.
+    #       Also make is work on windows
+    #       This is needed so that dll get moved correctly afterwards
+    (if stdenv.hostPlatform.isWindows then ''*.exe'' else ''*'') +
+    ''; do
         # We can't use --suffix here due to quoting so we craft the export command by hand
         wrapProgram "$prog" --run 'export GST_PLUGIN_SYSTEM_PATH_1_0=$GST_PLUGIN_SYSTEM_PATH_1_0''${GST_PLUGIN_SYSTEM_PATH_1_0:+:}$(unset _tmp; for profile in $NIX_PROFILES; do _tmp="$profile/lib/gstreamer-1.0''${_tmp:+:}$_tmp"; done; printf '%s' "$_tmp")'
     done
@@ -112,7 +123,7 @@ stdenv.mkDerivation rec {
     description = "Open source multimedia framework";
     homepage = "https://gstreamer.freedesktop.org";
     license = licenses.lgpl2Plus;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ ttuegel matthewbauer ];
   };
 }

@@ -36,7 +36,7 @@ stdenv.mkDerivation rec {
     homepage    = "https://libsndfile.github.io/libsndfile/";
     license     = licenses.lgpl2Plus;
     maintainers = with maintainers; [ lovek323 ];
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
 
     longDescription = ''
       Libsndfile is a C library for reading and writing files containing

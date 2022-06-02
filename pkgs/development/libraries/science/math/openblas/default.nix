@@ -23,6 +23,8 @@
 , enableAVX512 ? false
 , enableStatic ? stdenv.hostPlatform.isStatic
 , enableShared ? !stdenv.hostPlatform.isStatic
+# gfortran is broken
+, Buildlapack ? !stdenv.hostPlatform.isWindows
 }:
 
 with lib;
@@ -86,6 +88,14 @@ let
       DYNAMIC_ARCH = setDynamicArch true;
       NO_AVX512 = !enableAVX512;
       USE_OPENMP = !stdenv.hostPlatform.isMusl;
+    };
+
+    x86_64-windows = {
+       BINARY = 64;
+       TARGET = setTarget "PRESCOTT";
+       DYNAMIC_ARCH = setDynamicArch true;
+       NO_AVX512 = !enableAVX512;
+       NOFORTRAN = 1;
     };
 
     powerpc64le-linux = {
@@ -162,10 +172,13 @@ stdenv.mkDerivation rec {
     which
   ];
 
-  depsBuildBuild = [
-    buildPackages.gfortran
-    buildPackages.stdenv.cc
-  ];
+  depsBuildBuild = 
+# is this meant to be a nativeBuildInput?
+    lib.optionals Buildlapack [
+      buildPackages.gfortran
+    ] ++ [
+      buildPackages.stdenv.cc
+    ];
 
   makeFlags = mkMakeFlagsFromConfig (config // {
     FC = "${stdenv.cc.targetPrefix}gfortran";
@@ -229,7 +242,7 @@ EOF
     description = "Basic Linear Algebra Subprograms";
     license = licenses.bsd3;
     homepage = "https://github.com/xianyi/OpenBLAS";
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ ttuegel ];
   };
 }

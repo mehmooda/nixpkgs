@@ -23,21 +23,17 @@ in
 
 stdenv.mkDerivation rec {
   pname = "openjpeg";
-  version = "2.4.0"; # don't forget to change passthru.incDir
+  version = "2.5.0"; # don't forget to change passthru.incDir
 
   src = fetchFromGitHub {
     owner = "uclouvain";
     repo = "openjpeg";
     rev = "v${version}";
-    sha256 = "143dvy5g6v6129lzvl0r8mrgva2fppkn0zl099qmi9yi9l9h7yyf";
+    sha256 = "/0o3Fl6/jx5zu854TCqMyOz/8mnEyEC9lpZ6ij/tbHc=";
   };
 
   patches = [
     ./fix-cmake-config-includedir.patch
-    (fetchpatch {
-      url = "https://patch-diff.githubusercontent.com/raw/uclouvain/openjpeg/pull/1321.patch";
-      sha256 = "1cjpr76nf9g65nqkfnxnjzi3bv7ifbxpc74kxxibh58pzjlp6al8";
-    })
   ];
 
   outputs = [ "out" "dev" ];
@@ -70,14 +66,14 @@ stdenv.mkDerivation rec {
   propagatedBuildInputs = [ libpng libtiff lcms2 ];
 
   doCheck = (testsSupport && !stdenv.isAarch64 && !stdenv.hostPlatform.isPower64); # tests fail on aarch64-linux and powerpc64
-  checkPhase = ''
+  checkPhase = if (!stdenv.hostPlatform.isWindows) then ''
     substituteInPlace ../tools/ctest_scripts/travis-ci.cmake \
       --replace "JPYLYZER_EXECUTABLE=" "JPYLYZER_EXECUTABLE=\"${jpylyzer}/bin/jpylyzer\" # "
     OPJ_SOURCE_DIR=.. ctest -S ../tools/ctest_scripts/travis-ci.cmake
-  '';
+  '' else "";
 
   passthru = {
-    incDir = "openjpeg-2.4";
+    incDir = "openjpeg-2.5";
   };
 
   meta = with lib; {

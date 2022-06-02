@@ -32,6 +32,11 @@ stdenv.mkDerivation {
     })
   ];
 
+#  postPatch = if stdenv.hostPlatform.isWindows then ''
+#    sed 's/SYS=posix/SYS=mingw/' -i Makefile
+#    sed 's/SYS=posix/SYS=mingw/' -i librtmp/Makefile
+#  '' else null;
+
   makeFlags = [
     "prefix=$(out)"
     "CROSS_COMPILE=${stdenv.cc.targetPrefix}"
@@ -39,6 +44,7 @@ stdenv.mkDerivation {
     ++ optional gnutlsSupport "CRYPTO=GNUTLS"
     ++ optional opensslSupport "CRYPTO=OPENSSL"
     ++ optional stdenv.isDarwin "SYS=darwin"
+    ++ optional stdenv.hostPlatform.isWindows "SYS=mingw"
     ++ optional stdenv.cc.isClang "CC=clang";
 
   propagatedBuildInputs = [ zlib ]
@@ -53,7 +59,7 @@ stdenv.mkDerivation {
     description = "Toolkit for RTMP streams";
     homepage = "https://rtmpdump.mplayerhq.hu/";
     license = licenses.gpl2;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ codyopel ];
   };
 }

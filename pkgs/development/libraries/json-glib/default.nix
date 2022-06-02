@@ -79,6 +79,6 @@ stdenv.mkDerivation rec {
     homepage = "https://wiki.gnome.org/Projects/JsonGlib";
     license = licenses.lgpl21Plus;
     maintainers = teams.gnome.members;
-    platforms = with platforms; unix;
+    platforms = with platforms; unix ++ windows;
   };
 }

@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchFromGitHub, buildPackages, pkg-config, cmake
+{ stdenv, lib, fetchFromGitHub, pkgsBuildBuild, pkg-config, cmake
 , alsa-lib, glib, libjack2, libsndfile, libpulseaudio
 , AudioUnit, CoreAudio, CoreMIDI, CoreServices
 }:
@@ -14,9 +14,14 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-aR8TLxl6OziP+DMSNro0DB/UtvzXDeDYQ3o/iy70XD4=";
   };
 
-  nativeBuildInputs = [ buildPackages.stdenv.cc pkg-config cmake ];
+  postPatch = ''
+    ${pkgsBuildBuild.stdenv.cc}/bin/cc make_tables.c gen_conv.c gen_rvoice_dsp.c -o gentables
+  '';
 
-  buildInputs = [ glib libsndfile libjack2 ]
+  nativeBuildInputs = [ pkg-config cmake ];
+
+  buildInputs = [ glib libsndfile  ]
+    ++ lib.optionals stdenv.hostPlatform.isUnix [libjack2 ]
     ++ lib.optionals stdenv.isLinux [ alsa-lib libpulseaudio ]
     ++ lib.optionals stdenv.isDarwin [ AudioUnit CoreAudio CoreMIDI CoreServices ];
 
@@ -27,6 +32,6 @@ stdenv.mkDerivation rec {
     homepage    = "https://www.fluidsynth.org";
     license     = licenses.lgpl21Plus;
     maintainers = with maintainers; [ goibhniu lovek323 ];
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
   };
 }

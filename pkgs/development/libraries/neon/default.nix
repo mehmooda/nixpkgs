@@ -3,6 +3,10 @@
 , sslSupport ? true, openssl ? null
 , static ? stdenv.hostPlatform.isStatic
 , shared ? !stdenv.hostPlatform.isStatic
+, libtool
+, which
+, automake
+, autoconf
 }:
 
 assert compressionSupport -> zlib != null;
@@ -24,9 +28,21 @@ stdenv.mkDerivation rec {
 
   patches = optionals stdenv.isDarwin [ ./darwin-fix-configure.patch ];
 
-  nativeBuildInputs = [ pkg-config ];
+  # Package is checking build OS rather than hostOS. But it's still broken. So just add -lws2_32 to LDFLAGS
+  postPatch = if stdenv.hostPlatform.isWindows then ''
+    sed -e 's/AC_PATH_PROG/AC_CHECK_TOOL/' -e 's/$ne_cv_os_uname/$ac_cv_env_host_alias_value/' -e 's/MINGW\*/x86_64-w64-mingw32/' -i macros/neon.m4
+    sed -e 's/-no-undefined/-no-undefined -lws2_32/' -i src/Makefile.in
+  '' else null;
+
+  nativeBuildInputs = [ pkg-config ]
+    ++ lib.optionals stdenv.hostPlatform.isWindows [ libtool which automake autoconf ];
   buildInputs = [libxml2 openssl]
     ++ lib.optional compressionSupport zlib;
+
+  preConfigure = if stdenv.hostPlatform.isWindows then ''
+    ./autogen.sh
+  '' else null;
+
 
   configureFlags = [
     (lib.enableFeature shared "shared")
@@ -41,7 +57,7 @@ stdenv.mkDerivation rec {
     description = "An HTTP and WebDAV client library";
     homepage = "https://notroj.github.io/neon/";
     changelog = "https://github.com/notroj/${pname}/blob/${version}/NEWS";
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     license = licenses.lgpl2;
   };
 }

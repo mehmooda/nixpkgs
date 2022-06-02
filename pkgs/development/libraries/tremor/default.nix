@@ -21,10 +21,15 @@ stdenv.mkDerivation {
     sed -i /XIPH_PATH_OGG/d configure
   '';
 
+  postConfigure = ''
+    sed -i.bak -e "s/\(allow_undefined=\)yes/\1no/" libtool
+  '';
+
   meta = {
     homepage = "https://xiph.org/tremor/";
     description = "Fixed-point version of the Ogg Vorbis decoder";
     license = lib.licenses.bsd3;
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.unix ++ lib.platforms.windows;
   };
 }
+

@@ -47,7 +47,7 @@
 , cups
 , AppKit
 , Cocoa
-, broadwaySupport ? true
+, broadwaySupport ? (!stdenv.hostPlatform.isWindows) # Requires gio-unix
 }:
 
 let
@@ -79,7 +79,8 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     gettext
-    gobject-introspection
+    glib #glib-mkenums
+    ] ++ lib.optional (stdenv.hostPlatform == stdenv.buildPlatform) gobject-introspection ++ [
     makeWrapper
     meson
     ninja
@@ -91,7 +92,6 @@ stdenv.mkDerivation rec {
   ] ++ setupHooks;
 
   buildInputs = [
-    libxkbcommon
     libpng
     libtiff
     libjpeg
@@ -104,7 +104,7 @@ stdenv.mkDerivation rec {
     gst_all_1.gst-plugins-bad
     fribidi
     harfbuzz
-  ] ++ (with xorg; [
+  ] ++ lib.optionals (!stdenv.hostPlatform.isWindows) (with xorg; [
     libICE
     libSM
     libXcursor
@@ -112,6 +112,7 @@ stdenv.mkDerivation rec {
     libXi
     libXrandr
     libXrender
+    libxkbcommon
   ]) ++ lib.optionals stdenv.isDarwin [
     AppKit
   ] ++ lib.optionals trackerSupport [
@@ -140,7 +141,7 @@ stdenv.mkDerivation rec {
     wayland
   ] ++ lib.optionals vulkanSupport [
     vulkan-loader
-  ] ++ [
+  ] ++ lib.optionals (!stdenv.hostPlatform.isWindows) [
     # Required for GSettings schemas at runtime.
     # Will be picked up by wrapGAppsHook.
     gsettings-desktop-schemas
@@ -152,6 +153,8 @@ stdenv.mkDerivation rec {
     "-Dbuild-tests=false"
     "-Dtracker=${if trackerSupport then "enabled" else "disabled"}"
     "-Dbroadway-backend=${lib.boolToString broadwaySupport}"
+  ] ++ lib.optionals stdenv.hostPlatform.isWindows [
+    "-Dintrospection=disabled"
   ] ++ lib.optionals vulkanSupport [
     "-Dvulkan=enabled"
   ] ++ lib.optionals (!cupsSupport) [
@@ -197,7 +200,7 @@ stdenv.mkDerivation rec {
     moveToOutput bin/gtk4-update-icon-cache "$out"
     # Launcher
     moveToOutput bin/gtk-launch "$out"
-
+   '' + lib.optionalString (!stdenv.hostPlatform.isWindows) ''
     # TODO: patch glib directly
     for f in $dev/bin/gtk4-encode-symbolic-svg; do
       wrapProgram $f --prefix XDG_DATA_DIRS : "${shared-mime-info}/share"
@@ -208,7 +211,8 @@ stdenv.mkDerivation rec {
   '';
 
   # Wrap demos
-  postFixup =  lib.optionalString (!stdenv.isDarwin) ''
+  # TODO: Need to wrap .exe on windows
+  postFixup =  lib.optionalString (!stdenv.isDarwin && !stdenv.hostPlatform.isWindows) ''
     demos=(gtk4-demo gtk4-demo-application gtk4-icon-browser gtk4-widget-factory)
 
     for program in ''${demos[@]}; do

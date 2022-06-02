@@ -28,6 +28,6 @@ stdenv.mkDerivation rec {
     description = "A codec library which supports H.264 encoding and decoding";
     homepage = "https://www.openh264.org";
     license = licenses.bsd2;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchurl, file }:
+{ lib, stdenv, fetchurl, pkgsBuildBuild }:
 
 stdenv.mkDerivation rec {
   pname = "libmodplug";
@@ -7,14 +7,14 @@ stdenv.mkDerivation rec {
   preConfigure = ''
      substituteInPlace configure \
         --replace ' -mmacosx-version-min=10.5' "" \
-        --replace /usr/bin/file ${file}/bin/file
+        --replace /usr/bin/file ${pkgsBuildBuild.file}/bin/file
   '';
 
   meta = with lib; {
     description = "MOD playing library";
     homepage    = "http://modplug-xmms.sourceforge.net/";
     license     = licenses.publicDomain;
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ raskin ];
   };
 

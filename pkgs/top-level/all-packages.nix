@@ -5023,7 +5023,8 @@ with pkgs;
     idnSupport = true;
     zstdSupport = true;
   } // lib.optionalAttrs (!stdenv.hostPlatform.isStatic) {
-    gssSupport = true;
+#    gssSupport is automatically set to true if conditions are met
+#    gssSupport = true;
     brotliSupport = true;
   });
 

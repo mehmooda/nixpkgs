@@ -29,6 +29,7 @@
 , gnused ? null
 , cloog # unused; just for compat with gcc4, as we override the parameter on some places
 , buildPackages
+, peImpFixHook
 }:
 
 # LTO needs libelf and zlib.
@@ -180,6 +181,7 @@ stdenv.mkDerivation ({
         stdenv.cc
       ]
     )
+    ++ optional targetPlatform.isWindows peImpFixHook
     ++ optional targetPlatform.isLinux patchelf;
 
   buildInputs = [
@@ -296,6 +298,8 @@ stdenv.mkDerivation ({
     maintainers = lib.teams.gcc.members;
 
     platforms = lib.platforms.unix;
+
+    broken = (targetPlatform.isWindows && langFortran);
   };
 }
 

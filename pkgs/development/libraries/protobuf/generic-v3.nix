@@ -51,7 +51,7 @@ mkProtobufDerivation = buildProtobuf: stdenv: stdenv.mkDerivation {
     homepage = "https://developers.google.com/protocol-buffers/";
     license = lib.licenses.bsd3;
     mainProgram = "protoc";
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.unix ++ lib.platforms.windows;
   };
 
   passthru.version = version;

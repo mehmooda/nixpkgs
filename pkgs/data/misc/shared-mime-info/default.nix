@@ -9,6 +9,7 @@
 , itstool
 , libxml2
 , glib
+, zlib
 , shared-mime-info
 }:
 
@@ -35,6 +36,7 @@ stdenv.mkDerivation rec {
   ] ++ lib.optional (stdenv.hostPlatform != stdenv.buildPlatform) shared-mime-info;
 
   buildInputs = [
+    zlib
     libxml2
     glib
   ];
@@ -49,7 +51,7 @@ stdenv.mkDerivation rec {
     description = "A database of common MIME types";
     homepage = "http://freedesktop.org/wiki/Software/shared-mime-info";
     license = licenses.gpl2Plus;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = teams.freedesktop.members ++ [ maintainers.mimame ];
     mainProgram = "update-mime-database";
   };

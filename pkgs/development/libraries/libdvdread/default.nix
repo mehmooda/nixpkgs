@@ -1,4 +1,6 @@
-{lib, stdenv, fetchurl, libdvdcss}:
+{lib, stdenv, fetchurl, libdvdcss
+, autoreconfHook
+, pkgconfig}:
 
 stdenv.mkDerivation rec {
   pname = "libdvdread";
@@ -9,9 +11,18 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-zBkPVTdYztdXGFnjAfgCy0gh8WTQK/rP0yDBSk4Np2M=";
   };
 
+  postPatch = ''
+    sed 's/libdvdread_la_LDFLAGS = /libdvdread_la_LDFLAGS = -no-undefined /' -i Makefile.am
+  '';
+
+  nativeBuildInputs = [
+    autoreconfHook
+    pkgconfig
+  ];
+
   buildInputs = [libdvdcss];
 
-  NIX_LDFLAGS = "-ldvdcss";
+  configureFlags = ["--with-libdvdcss"];
 
   postInstall = ''
     ln -s dvdread $out/include/libdvdread
@@ -22,6 +33,7 @@ stdenv.mkDerivation rec {
     description = "A library for reading DVDs";
     license = lib.licenses.gpl2;
     maintainers = [ lib.maintainers.wmertens ];
-    platforms = with lib.platforms; linux ++ darwin;
+    platforms = with lib.platforms; linux ++ darwin ++ windows;
   };
 }
+

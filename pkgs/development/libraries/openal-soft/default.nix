@@ -1,8 +1,9 @@
 { lib, stdenv, fetchFromGitHub, cmake, pkg-config
-, alsaSupport ? !stdenv.isDarwin, alsa-lib
-, dbusSupport ? !stdenv.isDarwin, dbus
-, pipewireSupport ? !stdenv.isDarwin, pipewire
-, pulseSupport ? !stdenv.isDarwin, libpulseaudio
+, notDarows ? !(stdenv.isDarwin || stdenv.hostPlatform.isWindows)
+, alsaSupport ? notDarows, alsa-lib
+, dbusSupport ? notDarows, dbus
+, pipewireSupport ? notDarows, pipewire
+, pulseSupport ? notDarows, libpulseaudio
 , CoreServices, AudioUnit, AudioToolbox
 }:
 
@@ -42,11 +43,17 @@ stdenv.mkDerivation rec {
     "-DALSOFT_DLOPEN=OFF"
   ];
 
+
+  # openal.pc is broken for some reason
+  postFixup = if stdenv.hostPlatform.isWindows then ''
+    sed -e 's,''${exec_prefix}/,,' -e 's,''${prefix}/,,' -i $out/lib/pkgconfig/openal.pc
+  '' else null;
+
   meta = with lib; {
     description = "OpenAL alternative";
     homepage = "https://kcat.strangesoft.net/openal.html";
     license = licenses.lgpl2;
     maintainers = with maintainers; [ftrvxmtrx];
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
   };
 }

@@ -27,7 +27,7 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/strukturag/libde265";
     description = "Open h.265 video codec implementation";
     license = lib.licenses.lgpl3;
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.unix ++ lib.platforms.windows;
     maintainers = with lib.maintainers; [ gebner ];
   };
 }

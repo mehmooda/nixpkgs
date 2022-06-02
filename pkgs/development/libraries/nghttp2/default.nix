@@ -14,7 +14,7 @@
 , enablePython ? false, python3Packages, ncurses
 
 # Unit tests ; we have to set TZDIR, which is a GNUism.
-, enableTests ? stdenv.hostPlatform.isGnu, cunit, tzdata
+, enableTests ? (stdenv.hostPlatform.isGnu && stdenv.hostPlatform == stdenv.buildPlatform), cunit, tzdata
 
 # downstream dependencies, for testing
 , curl

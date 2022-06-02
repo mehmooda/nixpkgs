@@ -12,7 +12,7 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [ pkg-config ];
-  buildInputs = [ SDL2 libpng ] ++ lib.optionals stdenv.isDarwin [ libiconv ];
+  buildInputs = [ SDL2 libpng ] ++ lib.optionals (stdenv.isDarwin || stdenv.hostPlatform.isWindows) [ libiconv ];
 
   configureFlags = [
     "--with-tests"

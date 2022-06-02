@@ -6,6 +6,7 @@
 , tpmSupport ? false, trousers, which, nettools, libunistring
 , withP11-kit ? !stdenv.hostPlatform.isStatic, p11-kit
 , withSecurity ? false, Security  # darwin Security.framework
+, autoreconfHook, gtk-doc
 }:
 
 assert guileBindings -> guile != null;
@@ -28,7 +29,8 @@ stdenv.mkDerivation rec {
     sha256 = "16n4yvw3792gcdxkikjmhddr6cbs4wlk027zfxlhmchsqcxw8ngw";
   };
 
-  outputs = [ "bin" "dev" "out" "man" "devdoc" ];
+  outputs = [ "bin" "dev" "out" ]
+   ++ lib.optionals (!stdenv.hostPlatform.isWindows) [ "man" "devdoc" ];
   # Not normally useful docs.
   outputInfo = "devdoc";
   outputDoc  = "devdoc";
@@ -47,6 +49,8 @@ stdenv.mkDerivation rec {
     sed '2iexit 77' -i tests/{pkgconfig,fastopen}.sh
     sed '/^void doit(void)/,/^{/ s/{/{ exit(77);/' -i tests/{trust-store,psk-file}.c
     sed 's:/usr/lib64/pkcs11/ /usr/lib/pkcs11/ /usr/lib/x86_64-linux-gnu/pkcs11/:`pkg-config --variable=p11_module_path p11-kit-1`:' -i tests/p11-kit-trust.sh
+    sed 's/libgnutls_dane-$(DLL_VERSION).def/libgnutls-dane-$(DLL_VERSION).def/' -i libdane/Makefile.am
+
   '' + lib.optionalString stdenv.hostPlatform.isMusl '' # See https://gitlab.com/gnutls/gnutls/-/issues/945
     sed '2iecho "certtool tests skipped in musl build"\nexit 0' -i tests/cert-tests/certtool.sh
   '';
@@ -56,6 +60,9 @@ stdenv.mkDerivation rec {
     lib.optionals withP11-kit [
     "--with-default-trust-store-file=/etc/ssl/certs/ca-certificates.crt"
     "--with-default-trust-store-pkcs11=pkcs11:"
+  ] ++ lib.optionals stdenv.hostPlatform.isWindows [
+    # tlsproxy doesn't build on windows
+    "--disable-doc"
   ] ++ [
     "--disable-dependency-tracking"
     "--enable-fast-install"
@@ -71,13 +78,15 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = true;
 
-  buildInputs = [ lzo lzip libtasn1 libidn2 zlib gmp libunistring unbound gettext libiconv ]
+  buildInputs = [ lzo libtasn1 libidn2 zlib gmp libunistring unbound gettext libiconv ]
     ++ lib.optional (withP11-kit) p11-kit
     ++ lib.optional (isDarwin && withSecurity) Security
     ++ lib.optional (tpmSupport && stdenv.isLinux) trousers
     ++ lib.optional guileBindings guile;
 
   nativeBuildInputs = [ perl pkg-config ]
+  # gtktoolize needed for autoreconf
+    ++ lib.optionals stdenv.hostPlatform.isWindows [ autoreconfHook gtk-doc ]
     ++ lib.optionals (isDarwin && !withSecurity) [ autoconf automake ]
     ++ lib.optionals doCheck [ which nettools util-linux ];
 

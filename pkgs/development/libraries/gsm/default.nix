@@ -27,6 +27,11 @@ stdenv.mkDerivation rec {
       # Build dylib on Darwin
       sed -e 's,libgsm.a,libgsm.dylib,' -i Makefile
       sed -e 's,$(AR) $(ARFLAGS) $(LIBGSM) $(GSM_OBJECTS),$(LD) -o $(LIBGSM) -dynamiclib -install_name $(GSM_INSTALL_ROOT)/$(LIBGSM) $(GSM_OBJECTS) -lc,' -i Makefile
+    '' else if stdenv.hostPlatform.isWindows then ''
+      # TODO: Build DLL on Windows needs both libgsm.dll.a and libgsm.dll
+      sed -e '101d' -i Makefile
+      # Don't build toast (needs fchown)
+      sed -e 's/toastinstall gsm/gsm/' -e 's/$(LIBGSM) $(TOAST) $(TCAT) $(UNTOAST)/$(LIBGSM)/' -i Makefile
     '' else ''
       # Build ELF shared object by default
       sed -e 's,libgsm.a,libgsm.so,' -i Makefile
@@ -51,6 +56,6 @@ stdenv.mkDerivation rec {
     homepage    = "http://www.quut.com/gsm/";
     license     = licenses.bsd2;
     maintainers = with maintainers; [ codyopel raskin ];
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
   };
 }

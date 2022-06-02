@@ -29,7 +29,7 @@ stdenv.mkDerivation rec {
     description = "An audio resampling library";
     homepage = "http://soxr.sourceforge.net";
     license = licenses.lgpl21Plus;
-    platforms = platforms.unix;
+    platforms = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ ];
   };
 }

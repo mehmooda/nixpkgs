@@ -10,7 +10,7 @@
 , numactl
 
 # Multi bit-depth support (8bit+10bit+12bit):
-, multibitdepthSupport ? (stdenv.is64bit && !(stdenv.isAarch64 && stdenv.isLinux))
+, multibitdepthSupport ? (stdenv.is64bit && !(stdenv.isAarch64 && stdenv.isLinux) && (!stdenv.hostPlatform.isWindows))
 
 # Other options:
 , cliSupport ? true # Build standalone CLI application
@@ -93,14 +93,14 @@ stdenv.mkDerivation rec {
 
   # Builds 10bits and 12bits static libs on the side if multi bit-depth is wanted
   # (we are in x265_<version>/source/build)
-  preBuild = lib.optionalString (multibitdepthSupport) ''
-    cmake -S ../ -B ../build-10bits ${toString cmakeCommonFlags} ${toString cmakeStaticLibFlags}
-    make -C ../build-10bits -j $NIX_BUILD_CORES
-    cmake -S ../ -B ../build-12bits ${toString cmakeCommonFlags} ${toString cmakeStaticLibFlags} -DMAIN12=ON
-    make -C ../build-12bits -j $NIX_BUILD_CORES
-    ln -s ../build-10bits/libx265.a ./libx265-10.a
-    ln -s ../build-12bits/libx265.a ./libx265-12.a
-  '';
+#  preBuild = lib.optionalString (multibitdepthSupport) ''
+ #   cmake -S ../ -B ../build-10bits ${toString cmakeCommonFlags} ${toString cmakeStaticLibFlags}
+  #  make -C ../build-10bits -j $NIX_BUILD_CORES
+   # cmake -S ../ -B ../build-12bits ${toString cmakeCommonFlags} ${toString cmakeStaticLibFlags} -DMAIN12=ON
+   # make -C ../build-12bits -j $NIX_BUILD_CORES
+   # ln -s ../build-10bits/libx265.a ./libx265-10.a
+    #ln -s ../build-12bits/libx265.a ./libx265-12.a
+  #'';
 
   cmakeFlags = cmakeCommonFlags ++ [
     "-DGIT_ARCHETYPE=1" # https://bugs.gentoo.org/814116
@@ -124,9 +124,10 @@ stdenv.mkDerivation rec {
     runHook postCheck
   '';
 
-  postInstall = ''
-    rm -f ${placeholder "out"}/lib/*.a
-  '';
+# ? Why was this here?
+#  postInstall = ''
+#    rm -f ${placeholder "out"}/lib/*.a
+# '';
 
   meta = with lib; {
     description = "Library for encoding H.265/HEVC video streams";
@@ -135,5 +136,7 @@ stdenv.mkDerivation rec {
     license     = licenses.gpl2Plus;
     maintainers = with maintainers; [ codyopel ];
     platforms   = platforms.all;
+    #TODO: Get this working on all platforms
+    broken = (!stdenv.hostPlatform.isWindows);
   };
 }

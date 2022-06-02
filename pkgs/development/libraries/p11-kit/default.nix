@@ -1,7 +1,8 @@
 { lib
 , stdenv
 , fetchFromGitHub
-, autoreconfHook
+, meson
+, ninja
 , docbook-xsl-nons
 , gtk-doc
 , installShellFiles
@@ -12,6 +13,7 @@
 , libiconv
 , libintl
 , libtasn1
+, glib
 }:
 
 stdenv.mkDerivation rec {
@@ -33,7 +35,6 @@ stdenv.mkDerivation rec {
   # to link against for the target platform.
   # Hence, libtasn1 is required in both native and build inputs.
   nativeBuildInputs = [
-    autoreconfHook
     docbook-xsl-nons
     gtk-doc
     installShellFiles
@@ -41,6 +42,8 @@ stdenv.mkDerivation rec {
     libxslt.bin
     pkg-config
     which
+    meson
+    ninja
   ];
 
   buildInputs = [
@@ -48,24 +51,22 @@ stdenv.mkDerivation rec {
     libiconv
     libintl
     libtasn1
+    glib
   ];
 
-  autoreconfPhase = ''
-    NOCONFIGURE=1 ./autogen.sh
-  '';
-
-  configureFlags = [
-    "--enable-doc"
-    "--sysconfdir=/etc"
-    "--localstatedir=/var"
-    "--with-trust-paths=${lib.concatStringsSep ":" [
+  mesonFlags = [
+    "-Dsystem_config=etc"
+# TODO: FIX example install output (patch p11-kit/meson.build)
+#    "-Dsystem_config=/etc"
+    "-Dsystemd=disabled"
+    "-Dgtk_doc=true"
+    "-Dbash_completion=disabled"
+    "-Dtrust_paths=${lib.concatStringsSep ":" [
       "/etc/ssl/trust-source"               # p11-kit trust source
       "/etc/ssl/certs/ca-certificates.crt"  # NixOS + Debian/Ubuntu/Arch/Gentoo...
       "/etc/pki/tls/certs/ca-bundle.crt"    # Fedora/CentOS
     ]}"
   ];
-
-  enableParallelBuilding = true;
 
   # Tests run in fakeroot for non-root users
   preCheck = ''
@@ -76,13 +77,9 @@ stdenv.mkDerivation rec {
 
   doCheck = !stdenv.isDarwin;
 
-  installFlags = [
-    "exampledir=${placeholder "out"}/etc/pkcs11"
-  ];
-
-  postInstall = ''
-    installShellCompletion --bash bash-completion/{p11-kit,trust}
-  '';
+#  postInstall = ''
+#    installShellCompletion --bash bash-completion/{p11-kit,trust}
+#  '';
 
   meta = with lib; {
     description = "Library for loading and sharing PKCS#11 modules";

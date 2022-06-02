@@ -43,7 +43,7 @@ stdenv.mkDerivation rec {
     description = "Library for encoding H264/AVC video streams";
     homepage    = "http://www.videolan.org/developers/x264.html";
     license     = licenses.gpl2Plus;
-    platforms   = platforms.unix;
+    platforms   = platforms.unix ++ platforms.windows;
     maintainers = with maintainers; [ spwhitt tadeokondrak ];
   };
 }

@@ -13,6 +13,9 @@ stdenv.mkDerivation rec {
 
   #doCheck = true; # takes lots of time
 
+  # FORTIFY_SOURCE is used
+  NIX_LDFLAGS = if stdenv.hostPlatform.isWindows then "-lssp" else null;
+
   outputs = [ "bin" "dev" "out" "man" "doc" ];
 
   meta = with lib; {

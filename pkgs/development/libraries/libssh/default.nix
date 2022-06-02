@@ -9,6 +9,10 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-hrz4hb2bgEZv4OBUU8WLh332GvqLqUeljDVtfw+rgps=";
   };
 
+  patches = [
+    ./windows-pkg-config.patch
+  ];
+
   postPatch = ''
     # Fix headers to use libsodium instead of NaCl
     sed -i 's,nacl/,sodium/,g' ./include/libssh/curve25519.h src/curve25519.c

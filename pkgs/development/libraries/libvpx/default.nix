@@ -125,7 +125,7 @@ stdenv.mkDerivation rec {
     (enableFeature ontheflyBitpackingSupport "onthefly-bitpacking")
     (enableFeature errorConcealmentSupport "error-concealment")
     # Shared libraries are only supported on ELF platforms
-    (if isDarwin || isCygwin then
+    (if stdenv.hostPlatform.isWindows || isCygwin then
        "--enable-static --disable-shared"
      else
        "--enable-shared")
@@ -144,7 +144,9 @@ stdenv.mkDerivation rec {
     (enableFeature (experimentalSpatialSvcSupport ||
                     experimentalFpMbStatsSupport ||
                     experimentalEmulateHardwareSupport) "experimental")
-  ] ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform) [
+  ] ++ optionals stdenv.hostPlatform.isWindows [
+    "--force-target=x86_64-win64-gcc"
+  ] ++ optionals (stdenv.hostPlatform != stdenv.buildPlatform && !stdenv.hostPlatform.isWindows) [
     # libvpx darwin targets include darwin version (ie. ARCH-darwinXX-gcc, XX being the darwin version)
     # See all_platforms: https://github.com/webmproject/libvpx/blob/master/configure
     # Darwin versions: 10.4=8, 10.5=9, 10.6=10, 10.7=11, 10.8=12, 10.9=13, 10.10=14
@@ -169,7 +171,7 @@ stdenv.mkDerivation rec {
   buildInputs = [ ]
     ++ optionals unitTestsSupport [ coreutils curl ];
 
-  NIX_LDFLAGS = [
+  NIX_LDFLAGS = optionals (!stdenv.hostPlatform.isWindows) [
     "-lpthread" # fixes linker errors
   ];
 
@@ -184,5 +186,6 @@ stdenv.mkDerivation rec {
     license     = licenses.bsd3;
     maintainers = with maintainers; [ codyopel ];
     platforms   = platforms.all;
+#    broken = stdenv.hostPlatform.isWindows;
   };
 }

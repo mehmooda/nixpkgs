@@ -42,12 +42,11 @@ stdenv.mkDerivation {
     libpng
     freetype
     glib
+    fontconfig
   ] ++ lib.optionals x11Support [
     libXext
     libxcb
     libXrender
-  ] ++ lib.optionals (!stdenv.hostPlatform.isWindows) [
-    fontconfig
   ] ++ lib.optionals stdenv.isDarwin (with darwin.apple_sdk.framworks; [
     CoreFoundation
     ApplicationServices
