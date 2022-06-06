@@ -786,7 +786,7 @@ with pkgs;
   makeInitrdNG = callPackage ../build-support/kernel/make-initrd-ng.nix;
   makeInitrdNGTool = callPackage ../build-support/kernel/make-initrd-ng-tool.nix {};
 
-  makeWrapper = makeShellWrapper;
+  makeWrapper = if stdenv.hostPlatform.isWindows then makeBinaryWrapper else makeShellWrapper;
 
   makeShellWrapper = makeSetupHook
     { deps = [ dieHook ];
