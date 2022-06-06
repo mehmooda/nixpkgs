@@ -25,8 +25,7 @@
 , threadsCross ? null # for MinGW
 , crossStageStatic ? false
 , # Strip kills static libs of other archs (hence no cross)
-  stripped ? stdenv.hostPlatform.system == stdenv.buildPlatform.system
-          && stdenv.targetPlatform.system == stdenv.hostPlatform.system
+  stripped ? true
 , gnused ? null
 , cloog # unused; just for compat with gcc4, as we override the parameter on some places
 , buildPackages
@@ -240,7 +239,7 @@ stdenv.mkDerivation ({
     (if profiledCompiler then "profiledbootstrap" else "bootstrap");
 
   dontStrip = !stripped;
-
+	
   installTargets = optional stripped "install-strip";
 
   # https://gcc.gnu.org/install/specific.html#x86-64-x-solaris210
